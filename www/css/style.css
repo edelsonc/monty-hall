@@ -1,0 +1,23 @@
+.navbar {
+    background-color: #3c8dbc;
+}
+
+.navbar-heading {
+    text-align: center;
+}
+
+.navlist {
+    list-style-type: none;
+    margin: 0;
+    overflow: hidden;
+}
+
+.navlist li {
+    display: inline;
+}
+
+.navlist a {
+    color: #000000;
+    padding: 0px 8px 8px 0px;
+}
+
