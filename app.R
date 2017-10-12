@@ -53,15 +53,21 @@ ui <- fluidPage(
                     ),
                     column(width = 9, htmlOutput("doors"))
                 )),
-                tabPanel("Door Selection",
-                         column(width = 3),
-                         column(width = 9,
-                        plotOutput("door_selection")
+                tabPanel("Door Selection", fluidRow(
+                    column(width = 3, htmlOutput("plot_about")),
+                    column(width = 9, plotOutput("door_selection"))
+                )),
+                tabPanel("Monte Carlo", fluidRow(
+                    column(width = 4,
+                           textOutput("monte_about"),
+                           sliderInput("n_iter", label = "Number of Trials", min = 1,
+                                       max = 200, value = 25)),
+                    column(width = 8, plotOutput("Monte_Carlo"))
                 ))
     )
 )
 
-# Define server logic required to draw a histogram
+
 server <- function(input, output) {
     
     generate_game <- function() {
@@ -129,9 +135,47 @@ server <- function(input, output) {
         HTML(paste('<h5>You\'ve picked', door, 'and won a', prize, '!</h5>'))
     })
     
+    
+    # information for the third tab about plotting and the plot rendering function
+    output$plot_about <- renderText({
+        HTML("<div id=\"about_door\">What door did people pick? Find out here!</div>")
+    })
+    
     output$door_selection <- renderPlot({
         barplot(values$door_choice, main = "Door Selected", ylim = c(0, max(values$door_choice)),
                 names.arg = c("Door 1", "Door 2", "Door 3"), col = "sky blue")
+    })
+    
+    
+    # monte-carlo simulation in final tab
+    output$Monte_Carlo <- renderPlot({
+        
+        wins <- c(0, 0)  # no switch, switch
+        for (i in c(0:input$n_iter)) {
+            prizes <- sample(c("car", "goat", "goat"), size = 3)
+            door_num <- c(1:3)
+            doors <- cbind(door_num, prizes)
+            
+            selected <- sample(c(1:3), 1)
+            switch <- sample(c(TRUE, FALSE), 1)
+            show <- min(which(doors[,1] != selected & doors[,2] != "car"))
+            if (switch) {
+                selected <- doors[,1] != selected & doors[,1] != show
+            }
+            if (doors[selected,2] == "car") {
+                switch <- switch + 1
+                wins[switch] <- wins[[switch]] + 1
+            }
+        }
+        
+        barplot(wins/sum(wins), names.arg = c("Stayed", "Switched"), ylim = c(0, 1), 
+                main = "Percentage of total wins", col = "sky blue")
+        
+    })
+    
+    output$monte_about <- renderText({
+        "Monte-Carlo simulations are repeated random trials of a probabilisitic process. Here we've
+        played the Monty Hall game a number of times and recored wins when staying verse switching.\n"
     })
     
 }
