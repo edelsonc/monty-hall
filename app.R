@@ -52,6 +52,11 @@ ui <- fluidPage(
                         ), actionButton("select", "Continue")
                     ),
                     column(width = 9, htmlOutput("doors"))
+                )),
+                tabPanel("Door Selection",
+                         column(width = 3),
+                         column(width = 9,
+                        plotOutput("door_selection")
                 ))
     )
 )
@@ -67,6 +72,7 @@ server <- function(input, output) {
         return(doors)
     }
     values <- reactiveValues()
+    values$door_choice <- c(0, 0, 0)
     
     # the names of the image files for html rendering
     images <- list("door" = "images/transparent_door.png",
@@ -86,8 +92,10 @@ server <- function(input, output) {
             show_door <- as.character(min(which(c(values$game[,1] != input$selectDoor & values$game[,2] != "car"))))
             new_im <- images[[values$game[as.numeric(show_door),2]]]
             isolate({
-            values$show_door <- show_door
-            values$game[as.numeric(show_door),3] <- new_im
+                d <- as.numeric(input$selectDoor)
+                values$door_choice[d] <- values$door_choice[[d]] + 1/2
+                values$show_door <- show_door
+                values$game[as.numeric(show_door),3] <- new_im
             })
         } else if (input$select %% 3 == 2) {
             if (!(as.logical(input$stay))) {
@@ -119,6 +127,11 @@ server <- function(input, output) {
         door <- which(values$picked_door)[[1]]
         prize <- values$game[values$picked_door, 2]
         HTML(paste('<h5>You\'ve picked', door, 'and won a', prize, '!</h5>'))
+    })
+    
+    output$door_selection <- renderPlot({
+        barplot(values$door_choice, main = "Door Selected", ylim = c(0, max(values$door_choice)),
+                names.arg = c("Door 1", "Door 2", "Door 3"), col = "sky blue")
     })
     
 }
